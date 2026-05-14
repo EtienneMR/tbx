@@ -73,9 +73,8 @@ func (c *Exec) Run(args ...string) (*Result, error) {
 	return res, nil
 }
 
-// Must is like Run but calls tlog.Fatal on any error, printing stderr first.
-func (c *Exec) Must(args ...string) *Result {
-	res, err := c.Run(args...)
+// Check calls tlog.Fatal on any error, printing stderr first.
+func Check(res *Result, err error) *Result {
 	if err != nil {
 		if res.Stderr != "" {
 			tlog.Indent(res.Stderr)
@@ -83,6 +82,11 @@ func (c *Exec) Must(args ...string) *Result {
 		tlog.Fatal("%v", err)
 	}
 	return res
+}
+
+// Must is like Run but calls Check on result
+func (c *Exec) Must(args ...string) *Result {
+	return Check(c.Run(args...))
 }
 
 // Output runs the command and returns trimmed stdout.

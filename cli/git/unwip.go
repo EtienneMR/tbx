@@ -1,9 +1,11 @@
 package git
 
 import (
+	"errors"
 	"strings"
 
 	"charm.land/huh/v2"
+	"github.com/EtienneMR/tbx/texec"
 	"github.com/EtienneMR/tbx/tlog"
 	"github.com/spf13/cobra"
 )
@@ -28,13 +30,14 @@ func runUnwipCmd(cmd *cobra.Command, args []string) {
 		tlog.Fatal("Not on a WIP branch (expected prefix %q)", WIP_BRANCH_PREFIX)
 	}
 
-	snapshot_if_dirty("pre unwip snapshot", false)
+	snapshot_if_dirty("pre-unwip snapshot", false)
 
 	wip_head := git.Output("rev-parse", "HEAD")
 	changed_files := strings.Split(git.Output("diff", "--name-only", base_branch, wip_head), "\n")
 
 	var selected_files []string
 	var message string
+	var delete bool
 
 	opts := make([]huh.Option[string], len(changed_files))
 	for i, o := range changed_files {
@@ -53,6 +56,17 @@ func runUnwipCmd(cmd *cobra.Command, args []string) {
 				Title("Commit message").
 				Description("Describe the change being committed to "+base_branch+".").
 				Value(&message),
+
+			huh.NewConfirm().
+				Title("Delete branch ?").
+				Description("Should branch "+branch+" be deleted ?").
+				Value(&delete).
+				Validate(func(val bool) error {
+					if val && len(selected_files) != len(opts) {
+						return errors.New("Branch can only be deleted if all files are commited.")
+					}
+					return nil
+				}),
 		),
 	).Run()
 	tlog.Check(err)
@@ -86,27 +100,45 @@ func runUnwipCmd(cmd *cobra.Command, args []string) {
 	git.Must(add_args...)
 
 	tlog.Step("Committing")
-	git.Must("commit", "-m", message)
+	git.Must("commit", "--message", message)
 
 	tlog.Step("Pushing")
-	//git.Must("push")
+	git.Must("push")
 
-	tlog.Step("Advancing %q to new %q HEAD", branch, base_branch)
-	git.Must("branch", "-f", branch, base_branch)
+	if delete {
+		tlog.Step("Deleting local branch %q", branch)
+		git.Must("branch", "--delete", branch)
 
-	tlog.Step("Switching back to %q", branch)
-	git.Must("switch", branch)
+		tlog.Step("Deleting remote branch %q", branch)
 
-	if len(unselected_files) > 0 {
-		tlog.Step("Restoring unselected files from previous WIP state")
-		restore_unselected := append(
-			[]string{"restore", "--source", wip_head, "--"},
-			unselected_files...,
-		)
-		git.Must(restore_unselected...)
+		result, err := getRemoteOf(branch)
+		texec.Check(result, err)
+
+		res, err := git.Run("push", result.Stdout, "--delete", branch)
+		if res.Code != 1 {
+			texec.Check(res, err)
+		}
+	} else {
+		tlog.Step("Advancing %q to new %q HEAD", branch, base_branch)
+		git.Must("branch", "--force", branch, base_branch)
+
+		tlog.Step("Switching back to %q", branch)
+		git.Must("switch", branch)
+
+		if len(unselected_files) > 0 {
+			tlog.Step("Restoring unselected files from previous WIP state")
+			restore_unselected := append(
+				[]string{"restore", "--source", wip_head, "--"},
+				unselected_files...,
+			)
+			git.Must(restore_unselected...)
+		}
+
+		snapshot_if_dirty("post-unwip snapshot", true)
+
+		tlog.Blank()
+		tlog.Success("Committed %d file(s) to %q; %d file(s) left as unstaged changes on %q",
+			len(selected_files), base_branch, len(unselected_files), branch)
+
 	}
-
-	tlog.Blank()
-	tlog.Success("Committed %d file(s) to %q; %d file(s) left as unstaged changes on %q",
-		len(selected_files), base_branch, len(unselected_files), branch)
 }

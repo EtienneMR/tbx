@@ -8,6 +8,7 @@ import (
 
 const WIP_BRANCH_PREFIX = "wip/"
 const WIP_MESSAGE_PREFIX = "WIP: "
+const DEFAULT_REMOTE = "origin"
 
 var git = texec.New("git")
 
@@ -31,7 +32,7 @@ func snapshot_if_dirty(message string, always_push bool) {
 	} else {
 		tlog.Step("Snapshotting dirty working tree")
 
-		git.Must("add", "-A")
+		git.Must("add", "--all")
 
 		message = WIP_MESSAGE_PREFIX + message
 		tlog.Step("Committing %q", message)
@@ -39,5 +40,13 @@ func snapshot_if_dirty(message string, always_push bool) {
 	}
 
 	tlog.Step("Pushing snapshot")
-	git.Must("push")
+	git.Must("push", "--force-with-lease")
+}
+
+func getRemoteOf(branch string) (*texec.Result, error) {
+	result, err := git.Run("for-each-ref", "--format=%(upstream:remotename)", "refs/heads/"+branch)
+	if result.Stdout == "" {
+		result.Stdout = DEFAULT_REMOTE
+	}
+	return result, err
 }

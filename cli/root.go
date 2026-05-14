@@ -29,6 +29,6 @@ func Execute() {
 	cmd.AddCommand(git.Cmd)
 
 	if err := cmd.Execute(); err != nil {
-		tlog.Fatal(err.Error())
+		tlog.Fatal("%s", err.Error())
 	}
 }

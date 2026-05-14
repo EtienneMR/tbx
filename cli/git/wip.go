@@ -3,6 +3,7 @@ package git
 import (
 	"strings"
 
+	"github.com/EtienneMR/tbx/texec"
 	"github.com/EtienneMR/tbx/tlog"
 	"github.com/EtienneMR/tbx/tui"
 	"github.com/spf13/cobra"
@@ -14,8 +15,6 @@ var wipCmd = &cobra.Command{
 	Long:  `Switch to a WIP branch, stages all changes and commits with a message.`,
 	Run:   runWipCmd,
 }
-
-func init() {}
 
 func runWipCmd(cmd *cobra.Command, args []string) {
 	tlog.Header("Creating a WIP snapshot")
@@ -30,7 +29,20 @@ func runWipCmd(cmd *cobra.Command, args []string) {
 
 	if branch != wip_branch {
 		tlog.Step("Switching to %q", wip_branch)
-		git.Must("switch", "--force-create", wip_branch)
+		res, err := git.Run("switch", wip_branch)
+
+		if res.Code == 128 {
+			tlog.Step("Creating to %q", wip_branch)
+
+			result, err := getRemoteOf(branch)
+			texec.Check(result, err)
+
+			git.Must("switch", "--create", wip_branch)
+			git.Must("push", "--set-upstream", result.Stdout, wip_branch)
+
+		} else {
+			texec.Check(res, err)
+		}
 	}
 
 	snapshot_if_dirty(message, true)
