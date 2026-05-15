@@ -25,7 +25,7 @@ var Cmd = &cobra.Command{
 	Run:  run,
 }
 
-var vscode = process.New("codium2", "code")
+var vscode = process.New("codium", "code")
 var nano = process.New("nano")
 var dolphin = process.New("dolphin")
 
@@ -80,8 +80,16 @@ func openNano(files []string) {
 	tui.Check(nano.Resolve(), "edit")
 
 	for _, f := range files {
-		tui.Step("Opening %s", f)
-		nano.Live(f)
+		file, err := os.OpenFile(f, os.O_WRONLY|os.O_CREATE, 0)
+		if err == nil {
+			file.Close()
+			tui.Step("Opening %s", f)
+			nano.Live(f)
+		} else {
+
+			tui.Step("Opening %s (sudo)", f)
+			nano.Sudo().Live(f)
+		}
 	}
 }
 

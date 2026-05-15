@@ -19,8 +19,7 @@ var Cmd = &cobra.Command{
 }
 
 func init() {
-	Cmd.AddCommand(wipCmd)
-	Cmd.AddCommand(unwipCmd)
+	Cmd.AddCommand(wipCmd, unwipCmd, shipCmd)
 }
 
 func snapshot_if_dirty(message string, always_push bool) {

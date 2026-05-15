@@ -45,16 +45,12 @@ func NewResolved(name string, path string, args ...string) *Process {
 	}
 }
 
-func (c *Process) Sudo() (*Process, error) {
-	if err := sudo.Resolve(); err != nil {
-		return c, err
-	}
-	if err := c.Resolve(); err != nil {
-		return c, err
-	}
+func (c *Process) Sudo() *Process {
+	tui.Check(sudo.Resolve(), "process.Sudo")
+	tui.Check(c.Resolve(), "process.Sudo")
 
 	args := append([]string{c.Resolved.Path}, c.Args...)
-	return NewResolved(sudo.Resolved.Name, sudo.Resolved.Path, args...), nil
+	return NewResolved(sudo.Resolved.Name, sudo.Resolved.Path, args...)
 }
 
 func (c *Process) Resolve() error {

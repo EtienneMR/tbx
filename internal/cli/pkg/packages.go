@@ -37,11 +37,7 @@ func writePm() *process.Process {
 		tui.Fatal("no package manager found: %v", err)
 	}
 	if pm.Resolved.Name == "pacman" {
-		spm, err := pm.Sudo()
-		if err != nil {
-			tui.Fatal("sudo not available: %v", err)
-		}
-		return spm
+		return pm.Sudo()
 	}
 	return pm
 }
