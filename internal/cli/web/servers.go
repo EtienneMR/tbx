@@ -16,7 +16,7 @@ import (
 func codiumServer(path string) (*exec.Cmd, string, string) {
 	state_dir := filepath.Join(dirs.StateHome(), "codium")
 	err := os.MkdirAll(state_dir, 0o755)
-	tui.Check(err)
+	tui.Check(err, "codiumServer: state_dir")
 
 	cmd := tool.Codium.Exec().
 		Command(
@@ -34,12 +34,12 @@ func codiumServer(path string) (*exec.Cmd, string, string) {
 	cmd.Stderr = os.Stderr
 
 	stdout, err := cmd.StdoutPipe()
-	tui.Check(err)
+	tui.Check(err, "codiumServer: pipe stdout")
 
-	tui.Check(cmd.Start())
+	tui.Check(cmd.Start(), "codiumServer: start")
 
 	patterns, err := extractFirstRegex(stdout, regexp.MustCompile(`(http://localhost:\d+)([^\s]*)?`))
-	tui.Check(err)
+	tui.Check(err, "codiumServer: extract server url")
 
 	go func() {
 		io.Copy(io.Discard, stdout)
@@ -52,12 +52,12 @@ func cloudflareTunnel(url string) (*exec.Cmd, string) {
 	cmd := tool.Cloudflared.Exec().Command("--url", url)
 
 	stderr, err := cmd.StderrPipe()
-	tui.Check(err)
+	tui.Check(err, "cloudflareTunnel: pipe stderr")
 
-	tui.Check(cmd.Start())
+	tui.Check(cmd.Start(), "cloudflareTunnel: start")
 
 	patterns, err := extractFirstRegex(stderr, regexp.MustCompile(`https://[A-Za-z0-9._-]+\.trycloudflare\.com`))
-	tui.Check(err)
+	tui.Check(err, "cloudflareTunnel: extract tunnel url")
 
 	go func() {
 		io.Copy(io.Discard, stderr)

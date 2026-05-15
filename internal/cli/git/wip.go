@@ -18,10 +18,10 @@ var wipCmd = &cobra.Command{
 func runWipCmd(cmd *cobra.Command, args []string) {
 	tui.Header("Creating a WIP snapshot")
 
-	tui.Check(git.Resolve())
+	tui.Check(git.Resolve(), "wip")
 
 	message, err := tui.Input("Commit message: ", "manual snapshot")
-	tui.Check(err)
+	tui.Check(err, "wip: commit message")
 
 	branch := git.Output("rev-parse", "--abbrev-ref", "HEAD")
 	wip_branch := WIP_BRANCH_PREFIX + strings.TrimPrefix(branch, WIP_BRANCH_PREFIX)

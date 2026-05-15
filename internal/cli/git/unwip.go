@@ -2,6 +2,8 @@ package git
 
 import (
 	"errors"
+	"io/fs"
+	"os"
 	"strings"
 
 	"charm.land/huh/v2"
@@ -21,13 +23,13 @@ restores the chosen files onto the base branch, and commits them with a message.
 func runUnwipCmd(cmd *cobra.Command, args []string) {
 	tui.Header("Committing changes from WIP branch")
 
-	tui.Check(git.Resolve())
+	tui.Check(git.Resolve(), "unwip")
 
 	branch := git.Output("rev-parse", "--abbrev-ref", "HEAD")
 
 	base_branch, found := strings.CutPrefix(branch, WIP_BRANCH_PREFIX)
 	if !found {
-		tui.Fatal("Not on a WIP branch (expected prefix %q)", WIP_BRANCH_PREFIX)
+		tui.Fatal("not on a WIP branch (expected prefix %q)", WIP_BRANCH_PREFIX)
 	}
 
 	snapshot_if_dirty("pre-unwip snapshot", false)
@@ -69,7 +71,7 @@ func runUnwipCmd(cmd *cobra.Command, args []string) {
 				}),
 		),
 	).Run()
-	tui.Check(err)
+	tui.Check(err, "unwip: form")
 
 	selected_set := make(map[string]bool, len(selected_files))
 	for _, f := range selected_files {
@@ -87,6 +89,14 @@ func runUnwipCmd(cmd *cobra.Command, args []string) {
 	git.Must("switch", base_branch)
 
 	tui.Step("Restoring selected files from %q", branch)
+
+	for _, file := range selected_files {
+		err := os.Remove(file)
+		if !errors.Is(err, fs.ErrNotExist) {
+			tui.Check(err, "unwip: delete %q", file)
+		}
+	}
+
 	restore_args := append(
 		[]string{"restore", "--source", wip_head, "--"},
 		selected_files...,

@@ -71,17 +71,17 @@ func (c *Process) Resolve() error {
 func (c *Process) Command(args ...string) *exec.Cmd {
 	base := append([]string(nil), c.Args...)
 	all := append(base, args...)
+	tui.Check(c.Resolve(), "process.Command")
 	return exec.Command(c.Resolved.Path, all...)
 }
 
 // Run executes the command with the provided arguments and returns
 // combined stdout/stderr output.
 func (c *Process) Run(args ...string) (*Result, error) {
-	tui.Run("%s %s", c.Resolved.Name, strings.Join(args, " "))
-
 	if err := c.Resolve(); err != nil {
 		return nil, err
 	}
+	tui.Run("%s %s", c.Resolved.Name, strings.Join(args, " "))
 
 	var stdout, stderr bytes.Buffer
 	proc := c.Command(args...)
@@ -128,25 +128,16 @@ func (c *Process) Output(args ...string) string {
 // Live runs the command with stdin/stdout/stderr wired directly to the
 // controlling terminal. Use this for long-running commands where real-time
 // output matters (git clone, npm install, make …).
-//
-// Unlike Run, output is not captured and cannot be indented — it flows
-// to the terminal exactly as the child process writes it.
-func (c *Process) Live(args ...string) error {
+func (c *Process) Live(args ...string) {
+	tui.Check(c.Resolve(), "process.Live")
 	tui.Run("%s %s", c.Resolved.Name, strings.Join(args, " "))
-
-	if err := c.Resolve(); err != nil {
-		return err
-	}
 
 	proc := c.Command(args...)
 	proc.Stdin = os.Stdin
 	proc.Stdout = os.Stdout
 	proc.Stderr = os.Stderr
 
-	if err := proc.Run(); err != nil {
-		return fmt.Errorf("%s: %w", c.Resolved.Name, err)
-	}
-	return nil
+	tui.Check(proc.Run(), "process.Live: %q", c.Resolved.Name)
 }
 
 func (c *Process) find() (Resolved, error) {
@@ -160,7 +151,7 @@ func (c *Process) find() (Resolved, error) {
 	}
 
 	if len(errs) == 0 {
-		return Resolved{}, errors.New("process: no valid command names provided")
+		return Resolved{}, errors.New("find: no valid command names provided")
 	}
-	return Resolved{}, fmt.Errorf("process: none of the candidate commands were found: %s", strings.Join(errs, "; "))
+	return Resolved{}, fmt.Errorf("find: none of the candidate commands were found: %s", strings.Join(errs, "; "))
 }

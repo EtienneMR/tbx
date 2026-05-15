@@ -72,6 +72,11 @@ func Debug(format string, a ...any) {
 	print(colorMuted, iconInfo, format, a...)
 }
 
+// Item prints an item without icon.
+func Item(format string, a ...any) {
+	fmt.Fprintf(os.Stdout, "  %s\n", fmt.Sprintf(format, a...))
+}
+
 // Blank prints an empty line.
 func Blank() { fmt.Fprintln(os.Stdout) }
 
@@ -88,9 +93,9 @@ func Fatal(format string, a ...any) {
 }
 
 // Check call Fatal if an error is provided
-func Check(err error) {
+func Check(err error, prefix string, a ...any) {
 	if err != nil {
-		Fatal("%v", err)
+		Fatal("%v: %v", fmt.Sprintf(prefix, a...), err)
 	}
 }
 
