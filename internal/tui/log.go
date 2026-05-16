@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"charm.land/lipgloss/v2"
 )
@@ -74,7 +75,7 @@ func Debug(format string, a ...any) {
 
 // Item prints an item without icon.
 func Item(format string, a ...any) {
-	fmt.Fprintf(os.Stdout, "  %s\n", fmt.Sprintf(format, a...))
+	fmt.Fprintf(os.Stdout, "  %s\n", indentLines(fmt.Sprintf(format, a...)))
 }
 
 // Blank prints an empty line.
@@ -102,16 +103,20 @@ func Check(err error, prefix string, a ...any) {
 func print(style lipgloss.Style, icon, format string, a ...any) {
 	prefix := style.Render(icon)
 	msg := fmt.Sprintf(format, a...)
-	fmt.Fprintf(os.Stdout, "%s %s\n", prefix, msg)
+	fmt.Fprintf(os.Stdout, "%s %s\n", prefix, indentLines(msg))
 }
 
 func eprint(style lipgloss.Style, icon, format string, a ...any) {
 	prefix := style.Render(icon)
 	msg := fmt.Sprintf(format, a...)
-	fmt.Fprintf(os.Stderr, "%s %s\n", prefix, msg)
+	fmt.Fprintf(os.Stderr, "%s %s\n", prefix, indentLines(msg))
 }
 
 // Indent wraps multi-line output (e.g. command stdout) with a grey left margin.
 func Indent(block string) {
 	fmt.Fprintln(os.Stdout, borderStyle.Render(block))
+}
+
+func indentLines(msg string) string {
+	return strings.Join(strings.Split(msg, "\n"), "\n  ")
 }

@@ -1,6 +1,9 @@
 package git
 
 import (
+	"fmt"
+	"strings"
+
 	"charm.land/huh/v2"
 	"github.com/EtienneMR/tbx/internal/process"
 	"github.com/EtienneMR/tbx/internal/tui"
@@ -23,8 +26,16 @@ func runShipCmd(cmd *cobra.Command, args []string) {
 	branch := git.Output("rev-parse", "--abbrev-ref", "HEAD")
 	wip_branch := WIP_BRANCH_PREFIX + branch
 
+	currentTag := currentVersion()
+	major, minor, patch := parseSemver(currentTag)
+
+	nextMajor := fmt.Sprintf("v%d.0.0", major+1)
+	nextMinor := fmt.Sprintf("v%d.%d.0", major, minor+1)
+	nextPatch := fmt.Sprintf("v%d.%d.%d", major, minor, patch+1)
+
 	var message string
 	var next_action string
+	var bump string
 
 	err := huh.NewForm(
 		huh.NewGroup(
@@ -42,16 +53,48 @@ func runShipCmd(cmd *cobra.Command, args []string) {
 					huh.NewOption("Delete", "delete"),
 				).
 				Value(&next_action),
+
+			huh.NewSelect[string]().
+				Title("Version bump").
+				Description("Tag the shipped commit. Current: "+currentTag).
+				Options(
+					huh.NewOption("major  "+nextMajor, nextMajor),
+					huh.NewOption("minor  "+nextMinor, nextMinor),
+					huh.NewOption("patch  "+nextPatch, nextPatch),
+					huh.NewOption("custom", "custom"),
+					huh.NewOption("none", "none"),
+				).
+				Value(&bump),
 		),
 	).Run()
 	tui.Check(err, "ship: form")
+
+	if bump == "custom" {
+		bump = ""
+		err = huh.NewForm(
+			huh.NewGroup(
+				huh.NewInput().
+					Title("Version tag").
+					Placeholder("v0.0.0").
+					Value(&bump),
+			),
+		).Run()
+		tui.Check(err, "ship: version form")
+	}
 
 	tui.Step("Committing")
 	git.Must("add", "--all")
 	git.Must("commit", "--message", message)
 
+	if bump != "none" {
+		tui.Step("Tagging %s", bump)
+		git.Must("tag", "-a", bump, "-m", bump)
+
+		tui.Success("Tagged %s", bump)
+	}
+
 	tui.Step("Pushing")
-	git.Must("push")
+	git.Must("push", "--follow-tags")
 
 	switch next_action {
 	case "switch", "reset":
@@ -86,4 +129,21 @@ func runShipCmd(cmd *cobra.Command, args []string) {
 
 	tui.Blank()
 	tui.Success("Committed changes to %q", branch)
+}
+
+// currentVersion returns the most recent semver tag reachable from HEAD,
+// or "none" when the repository has no tags yet.
+func currentVersion() string {
+	res, err := git.Run("describe", "--tags", "--abbrev=0", "--match", "v*")
+	if err != nil || res.Stdout == "" {
+		return "none"
+	}
+	return res.Stdout
+}
+
+// parseSemver parses a vMAJOR.MINOR.PATCH string.
+func parseSemver(tag string) (int, int, int) {
+	var ma, mi, pa int
+	fmt.Sscanf(strings.TrimPrefix(tag, "v"), "%d.%d.%d", &ma, &mi, &pa)
+	return ma, mi, pa
 }

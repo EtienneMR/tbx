@@ -57,7 +57,7 @@ func (t *Tool) LatestVersion() (string, error) {
 	return latestRelease(t.Repo)
 }
 
-// Cmd returns a ready-to-use *process.Exec pointing at the installed binary.
+// Cmd returns a ready-to-use *process.Process pointing at the installed binary.
 func (t *Tool) Exec() *process.Process {
 	return process.NewResolved(t.Name, t.BinaryPath())
 }
@@ -69,10 +69,10 @@ func (t *Tool) Install(version string) error {
 
 	// Clean any leftover staging dir from a previous failed attempt.
 	if err := os.RemoveAll(staging); err != nil {
-		return fmt.Errorf("ttool: clean staging for %s: %e", t.Name, err)
+		return fmt.Errorf("ttool: clean staging for %s: %s", t.Name, err)
 	}
 	if err := os.MkdirAll(staging, 0o755); err != nil {
-		return fmt.Errorf("ttool: mkdir staging for %s: %e", t.Name, err)
+		return fmt.Errorf("ttool: mkdir staging for %s: %s", t.Name, err)
 	}
 
 	tui.Step("Downloading %s %s", t.Name, version)

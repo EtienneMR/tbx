@@ -12,6 +12,7 @@ func Confirm(question string, defaultVal bool) (bool, error) {
 		Title(question).
 		Value(&answer).
 		Run()
+	Check(err, "tui.Confirm")
 	return answer, err
 }
 
@@ -24,6 +25,7 @@ func Input(label, defaultVal string) (string, error) {
 			Placeholder(defaultVal).
 			Value(&val).
 			Run()
+	Check(err, "tui.Confirm")
 
 	if val == "" {
 		return defaultVal, err

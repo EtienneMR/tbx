@@ -52,17 +52,17 @@ func runCodiumCmd(cmd *cobra.Command, args []string) {
 	}
 
 	if info, err := os.Stat(path); err != nil {
-		tui.Fatal("codium path %q: %e", path, err)
+		tui.Fatal("codium path %q: %s", path, err)
 	} else if !info.IsDir() {
 		tui.Fatal("codium path %q is not a directory", path)
 	}
 
 	tui.Info("Updating Codium and Cloudflared")
 	if _, err := tool.Codium.Update(true, true); err != nil {
-		tui.Fatal("updating Codium: %e", err)
+		tui.Fatal("updating Codium: %s", err)
 	}
 	if _, err := tool.Cloudflared.Update(true, true); err != nil {
-		tui.Fatal("updating Cloudflared: %e", err)
+		tui.Fatal("updating Cloudflared: %s", err)
 	}
 
 	tui.Info("Starting Codium for %s", path)
@@ -85,7 +85,7 @@ func runCodiumCmd(cmd *cobra.Command, args []string) {
 	tui.Success("Editor available at %s%s", cloudflareHost, codiumPath)
 
 	if _, err := codiumCommand.Process.Wait(); err != nil {
-		tui.Fatal("codium server stopped: %e", err)
+		tui.Fatal("codium server stopped: %s", err)
 	}
 }
 
@@ -112,6 +112,6 @@ func runTunnelCmd(cmd *cobra.Command, args []string) {
 	tui.Success("Tunnel available at %s%s", cloudflareHost, path)
 
 	if _, err := cloudflareCommand.Process.Wait(); err != nil {
-		tui.Fatal("cloudflared tunnel stopped: %e", err)
+		tui.Fatal("cloudflared tunnel stopped: %s", err)
 	}
 }

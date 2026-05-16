@@ -13,7 +13,7 @@ func completeLocal(_ *cobra.Command, args []string, toComplete string) ([]string
 	res, err := pacman.Run("-Ssq", toComplete)
 	if err != nil || res.Stdout == "" {
 		if err != nil {
-			tui.Error("%e", err)
+			tui.Error("%s", err)
 		}
 		return nil, noFiles
 	}
@@ -32,7 +32,7 @@ func completeInstalled(_ *cobra.Command, args []string, toComplete string) ([]st
 	res, err := pm.Run("-Qqe")
 	if err != nil || res.Stdout == "" {
 		if err != nil {
-			tui.Error("%e", err)
+			tui.Error("%s", err)
 		}
 		return nil, noFiles
 	}
@@ -51,7 +51,7 @@ func completeOrphans(_ *cobra.Command, args []string, toComplete string) ([]stri
 	res, err := pm.Run("-Qdttq")
 	if err != nil || res.Stdout == "" {
 		if err != nil {
-			tui.Error("%e", err)
+			tui.Error("%s", err)
 		}
 		return nil, noFiles
 	}
