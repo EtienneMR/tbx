@@ -104,7 +104,7 @@ func Check(res *Result, err error) *Result {
 		if res.Stderr != "" {
 			tui.Indent(res.Stderr)
 		}
-		tui.Fatal("%v", err)
+		tui.Fatal("%s", err)
 	}
 	return res
 }
@@ -121,18 +121,22 @@ func (c *Process) Output(args ...string) string {
 }
 
 // Test runs the command and test if return code is zero
-func (c *Process) Test(error_code int, args ...string) bool {
+func (c *Process) Test(errorCode int, args ...string) bool {
 	res, err := c.Run(args...)
-	if res.Code == error_code {
+
+	if IsErrorCode(err, errorCode) {
 		return false
 	}
+
 	Check(res, err)
 	return true
 }
 
-// Live runs the command with stdin/stdout/stderr wired directly to the controlling terminal.
-func (c *Process) Live(args ...string) {
-	tui.Check(c.Resolve(), "process.Live")
+func (c *Process) LiveUnchecked(args ...string) error {
+	if err := c.Resolve(); err != nil {
+		return err
+	}
+
 	tui.Run("%s %s", c.Resolved.Path, strings.Join(args, " "))
 
 	proc := c.Command(args...)
@@ -140,7 +144,12 @@ func (c *Process) Live(args ...string) {
 	proc.Stdout = os.Stdout
 	proc.Stderr = os.Stderr
 
-	tui.Check(proc.Run(), "process.Live: %q", c.Resolved.Name)
+	return proc.Run()
+}
+
+// Live runs the command with stdin/stdout/stderr wired directly to the controlling terminal.
+func (c *Process) Live(args ...string) {
+	tui.Check(c.LiveUnchecked(args...), "process.Live: %q", c.Resolved.Name)
 }
 
 func (c *Process) find() (Resolved, error) {
@@ -157,4 +166,10 @@ func (c *Process) find() (Resolved, error) {
 		return Resolved{}, errors.New("find: no valid command names provided")
 	}
 	return Resolved{}, fmt.Errorf("find: none of the candidate commands were found: %s", strings.Join(errs, "; "))
+}
+
+func IsErrorCode(err error, code int) bool {
+	exit, ok := errors.AsType[*exec.ExitError](err)
+
+	return ok && exit.ExitCode() == code
 }

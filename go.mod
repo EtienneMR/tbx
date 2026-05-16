@@ -1,6 +1,6 @@
 module github.com/EtienneMR/tbx
 
-go 1.25.8
+go 1.26.3
 
 require (
 	charm.land/lipgloss/v2 v2.0.1

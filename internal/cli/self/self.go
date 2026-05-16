@@ -42,7 +42,9 @@ var updateCmd = &cobra.Command{
 	Short: "Update all tbx-managed tools",
 	Long:  `Update all installed tbx-managed tools, including itself.`,
 	Args:  cobra.NoArgs,
-	Run:   runUpdateCmd,
+	Run: func(cmd *cobra.Command, _ []string) {
+		UpdateTools()
+	},
 }
 
 func runInstallCmd(cmd *cobra.Command, _ []string) {
@@ -65,11 +67,11 @@ func runInstallCmd(cmd *cobra.Command, _ []string) {
 	}
 }
 
-func runUpdateCmd(cmd *cobra.Command, _ []string) {
+func UpdateTools() {
 	tui.Header("Updating tools")
 
 	updated, err := tool.Tbx.Update(true, false)
-	tui.Check(err, "self update")
+	tui.Check(err, "update tools")
 
 	if updated {
 		tui.Info("tbx has been updated, restarting command")
@@ -78,7 +80,8 @@ func runUpdateCmd(cmd *cobra.Command, _ []string) {
 	} else {
 		for _, t := range tool.All {
 			if t != tool.Tbx {
-				t.Update(false, false)
+				_, err = t.Update(false, false)
+				tui.Check(err, "update tools")
 			}
 		}
 	}

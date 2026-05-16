@@ -24,4 +24,4 @@ docs:
 
 clean:
 	go clean
-	rm -rf dist/
+	rm -rf dist/ docs/

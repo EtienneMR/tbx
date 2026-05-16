@@ -3,6 +3,7 @@ package pkg
 import (
 	"strings"
 
+	"github.com/EtienneMR/tbx/internal/process"
 	"github.com/EtienneMR/tbx/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -30,15 +31,19 @@ Without flags the list is printed and nothing is changed.
 	return cmd
 }()
 
-func runOrphans(remove bool) {
-	res := pm.Output("-Qdttq")
+func removeOrphans() {
+	runOrphans(true)
+}
 
-	if strings.TrimSpace(res) == "" {
+func runOrphans(remove bool) {
+	res, err := pm.Run("-Qdttq")
+	if process.IsErrorCode(err, 1) {
 		tui.Success("No orphaned packages found")
 		return
 	}
+	process.Check(res, err)
 
-	orphans := strings.Fields(res)
+	orphans := strings.Fields(res.Stdout)
 
 	if !remove {
 		tui.Header("Orphaned packages")
@@ -55,7 +60,7 @@ func runOrphans(remove bool) {
 		return
 	}
 
-	tui.Step("Removing %d orphan(s): %s", len(orphans), strings.Join(orphans, "  "))
+	tui.Header("Removing orphans")
 
 	argv := append([]string{"-Rns"}, orphans...)
 	writePm().Live(argv...)

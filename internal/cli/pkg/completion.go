@@ -3,6 +3,7 @@ package pkg
 import (
 	"strings"
 
+	"github.com/EtienneMR/tbx/internal/process"
 	"github.com/EtienneMR/tbx/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -49,8 +50,8 @@ func completeInstalled(_ *cobra.Command, args []string, toComplete string) ([]st
 
 func completeOrphans(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	res, err := pm.Run("-Qdttq")
-	if err != nil || res.Stdout == "" {
-		if err != nil {
+	if err != nil {
+		if !process.IsErrorCode(err, 1) {
 			tui.Error("%s", err)
 		}
 		return nil, noFiles

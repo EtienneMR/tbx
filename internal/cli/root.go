@@ -7,6 +7,7 @@ import (
 	"github.com/EtienneMR/tbx/internal/cli/git"
 	"github.com/EtienneMR/tbx/internal/cli/pkg"
 	"github.com/EtienneMR/tbx/internal/cli/self"
+	"github.com/EtienneMR/tbx/internal/cli/system"
 	"github.com/EtienneMR/tbx/internal/cli/web"
 	"github.com/EtienneMR/tbx/internal/tui"
 	"github.com/spf13/cobra"
@@ -29,7 +30,7 @@ func Execute() {
 	cmd.Version = Version
 	cmd.SetVersionTemplate(fmt.Sprintf("tbx %s\n", Version))
 
-	cmd.AddCommand(git.Cmd, web.Cmd, pkg.Cmd, edit.Cmd, self.Cmd)
+	cmd.AddCommand(git.Cmd, web.Cmd, pkg.Cmd, edit.Cmd, self.Cmd, system.Cmd)
 
 	if err := cmd.Execute(); err != nil {
 		tui.Fatal("%s", err.Error())
