@@ -123,10 +123,12 @@ func (t *Tool) Update(install bool, prompt bool) (bool, error) {
 	}
 
 	if prompt {
-		label := fmt.Sprintf("Install %s %s?", t.Name, latest)
-		ok, err := tui.Confirm(label, true)
-		if err != nil || !ok {
+		ok, err := tui.Confirm("Install ?", true)
+		if err != nil {
 			return false, err
+		}
+		if !ok {
+			tui.Fatal("tool update: cancelled by user")
 		}
 	}
 

@@ -77,7 +77,7 @@ func (c *Process) Run(args ...string) (*Result, error) {
 	if err := c.Resolve(); err != nil {
 		return nil, err
 	}
-	tui.Run("%s %s", c.Resolved.Name, strings.Join(args, " "))
+	tui.Run("%s %s", c.Resolved.Path, strings.Join(args, " "))
 
 	var stdout, stderr bytes.Buffer
 	proc := c.Command(args...)
@@ -115,18 +115,25 @@ func (c *Process) Must(args ...string) *Result {
 }
 
 // Output runs the command and returns trimmed stdout.
-// Convenient for single-value reads like the current branch name.
 func (c *Process) Output(args ...string) string {
 	res := c.Must(args...)
 	return res.Stdout
 }
 
-// Live runs the command with stdin/stdout/stderr wired directly to the
-// controlling terminal. Use this for long-running commands where real-time
-// output matters (git clone, npm install, make …).
+// Test runs the command and test if return code is zero
+func (c *Process) Test(error_code int, args ...string) bool {
+	res, err := c.Run(args...)
+	if res.Code == error_code {
+		return false
+	}
+	Check(res, err)
+	return true
+}
+
+// Live runs the command with stdin/stdout/stderr wired directly to the controlling terminal.
 func (c *Process) Live(args ...string) {
 	tui.Check(c.Resolve(), "process.Live")
-	tui.Run("%s %s", c.Resolved.Name, strings.Join(args, " "))
+	tui.Run("%s %s", c.Resolved.Path, strings.Join(args, " "))
 
 	proc := c.Command(args...)
 	proc.Stdin = os.Stdin

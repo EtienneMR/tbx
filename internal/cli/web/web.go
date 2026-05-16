@@ -65,7 +65,7 @@ func runCodiumCmd(cmd *cobra.Command, args []string) {
 		tui.Fatal("updating Cloudflared: %s", err)
 	}
 
-	tui.Info("Starting Codium for %s", path)
+	tui.Info("Starting Codium server in %s", path)
 	codiumCommand, codiumHost, codiumPath := codiumServer(path)
 	defer func() {
 		if codiumCommand != nil && codiumCommand.Process != nil {

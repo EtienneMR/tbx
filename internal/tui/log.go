@@ -29,7 +29,7 @@ const (
 )
 
 // Verbosity controls whether Debug lines are printed.
-var Verbosity int // 0 = normal, 1 = verbose
+var Verbosity int // 0 = normal
 
 // Step prints a primary action line (blue ◆).
 func Step(format string, a ...any) {

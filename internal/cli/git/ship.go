@@ -37,36 +37,38 @@ func runShipCmd(cmd *cobra.Command, args []string) {
 	var next_action string
 	var bump string
 
-	err := huh.NewForm(
-		huh.NewGroup(
-			huh.NewText().
-				Title("Commit message").
-				Description("Describe the changes being shipped to "+branch+".").
-				Value(&message),
+	var fields []huh.Field
+	fields = append(fields, huh.NewText().
+		Title("Commit message").
+		Description("Describe the changes being shipped to "+branch+".").
+		Value(&message))
 
-			huh.NewSelect[string]().
-				Title("What next?").
-				Description("Choose what to do with "+wip_branch+" after the ship commit.").
-				Options(
-					huh.NewOption("Switch", "switch"),
-					huh.NewOption("Reset", "reset"),
-					huh.NewOption("Delete", "delete"),
-				).
-				Value(&next_action),
+	if git.Test(1, "show-ref", "--verify", "--quiet", wip_branch) {
+		fields = append(fields, huh.NewSelect[string]().
+			Title("What next?").
+			Description("Choose what to do with "+wip_branch+" after the ship commit.").
+			Options(
+				huh.NewOption("Switch", "switch"),
+				huh.NewOption("Reset", "reset"),
+				huh.NewOption("Delete", "delete"),
+				huh.NewOption("Keep", "keep"),
+			).
+			Value(&next_action))
+	}
 
-			huh.NewSelect[string]().
-				Title("Version bump").
-				Description("Tag the shipped commit. Current: "+currentTag).
-				Options(
-					huh.NewOption("major  "+nextMajor, nextMajor),
-					huh.NewOption("minor  "+nextMinor, nextMinor),
-					huh.NewOption("patch  "+nextPatch, nextPatch),
-					huh.NewOption("custom", "custom"),
-					huh.NewOption("none", "none"),
-				).
-				Value(&bump),
-		),
-	).Run()
+	fields = append(fields, huh.NewSelect[string]().
+		Title("Version bump").
+		Description("Tag the shipped commit. Current: "+currentTag).
+		Options(
+			huh.NewOption("major  "+nextMajor, nextMajor),
+			huh.NewOption("minor  "+nextMinor, nextMinor),
+			huh.NewOption("patch  "+nextPatch, nextPatch).Selected(true),
+			huh.NewOption("custom", "custom"),
+			huh.NewOption("none", "none"),
+		).
+		Value(&bump))
+
+	err := huh.NewForm(huh.NewGroup(fields...)).Run()
 	tui.Check(err, "ship: form")
 
 	if bump == "custom" {

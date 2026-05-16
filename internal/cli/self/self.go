@@ -1,12 +1,14 @@
 package self
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/EtienneMR/tbx/internal/dirs"
 	"github.com/EtienneMR/tbx/internal/tool"
 	"github.com/EtienneMR/tbx/internal/tui"
 	"github.com/spf13/cobra"
@@ -19,7 +21,7 @@ var Cmd = &cobra.Command{
 }
 
 func init() {
-	Cmd.AddCommand(installCmd)
+	Cmd.AddCommand(installCmd, updateCmd)
 }
 
 var installCmd = &cobra.Command{
@@ -32,23 +34,53 @@ Then, optionally install shell completion for bash, zsh, or fish.
 
   export EDITOR="tbx edit"   # use tbx as your $EDITOR afterwards`,
 	Args: cobra.NoArgs,
-	Run: func(cmd *cobra.Command, _ []string) {
-		runInstallCmd(cmd.Root())
-	},
+	Run:  runInstallCmd,
 }
 
-func runInstallCmd(root *cobra.Command) {
-	tui.Header("tbx self install")
+var updateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update all tbx-managed tools",
+	Long:  `Update all installed tbx-managed tools, including itself.`,
+	Args:  cobra.NoArgs,
+	Run:   runUpdateCmd,
+}
+
+func runInstallCmd(cmd *cobra.Command, _ []string) {
+	tui.Header("Installing tbx")
 
 	tui.Step("Installing tbx")
 	_, err := tool.Tbx.Update(true, false)
-	tui.Check(err, "self install")
+	tui.Check(err, "self install update")
 
-	tui.Blank()
+	err = os.Symlink(tool.Tbx.BinaryPath(), filepath.Join(dirs.BinHome(), tool.Tbx.Name))
+	if err != nil && !errors.Is(err, os.ErrExist) {
+		tui.Check(err, "self install link")
+	}
+
+	tui.Step("Installing completion")
 
 	shell := pickShell()
 	if shell != "" {
-		installCompletion(root, shell)
+		installCompletion(cmd.Root(), shell)
+	}
+}
+
+func runUpdateCmd(cmd *cobra.Command, _ []string) {
+	tui.Header("Updating tools")
+
+	updated, err := tool.Tbx.Update(true, false)
+	tui.Check(err, "self update")
+
+	if updated {
+		tui.Info("tbx has been updated, restarting command")
+		tool.Tbx.Exec().Live(os.Args[1:]...)
+		os.Exit(0)
+	} else {
+		for _, t := range tool.All {
+			if t != tool.Tbx {
+				t.Update(false, false)
+			}
+		}
 	}
 }
 
