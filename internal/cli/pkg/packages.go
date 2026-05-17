@@ -23,7 +23,7 @@ func init() {
 		installCmd,
 		tempCmd,
 		searchCmd,
-		orphansCmd,
+		orphanCmd,
 		explicitCmd,
 	)
 }

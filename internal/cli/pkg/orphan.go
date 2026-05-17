@@ -8,21 +8,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var orphansCmd = func() *cobra.Command {
+var orphanCmd = func() *cobra.Command {
 	var remove bool
 
 	cmd := &cobra.Command{
-		Use:   "orphans [package...]",
-		Short: "List orphaned packages; optionally remove them",
-		Long: `List all installed packages that were pulled in as dependencies but are no
-longer required by any explicitly-installed package.
-
-Without flags the list is printed and nothing is changed.
-
-  --remove    Remove every detected orphan`,
+		Use:   "orphan [--remove] [package...]",
+		Short: "List orphaned packages; optionally mark new ones or remove them",
+		Long: `Mark provided packages as dependencies and
+list all installed packages that were pulled in as dependencies
+but are no longer required by any explicitly-installed package.`,
 		ValidArgsFunction: completeInstalled,
-		Run: func(cmd *cobra.Command, _ []string) {
-			runOrphans(remove)
+		Run: func(cmd *cobra.Command, args []string) {
+			runOrphan(remove, args)
 		},
 	}
 
@@ -32,10 +29,15 @@ Without flags the list is printed and nothing is changed.
 }()
 
 func removeOrphans() {
-	runOrphans(true)
+	runOrphan(true, nil)
 }
 
-func runOrphans(remove bool) {
+func runOrphan(remove bool, packages []string) {
+	if len(packages) > 0 {
+		tui.Header("Marking packages as dependencies")
+		writePm().AddArgs("-D", "--asdeps", "--").Run(packages...)
+	}
+
 	res, err := pm.Run("-Qdttq")
 	if process.IsErrorCode(err, 1) {
 		tui.Success("No orphaned packages found")
@@ -62,8 +64,7 @@ func runOrphans(remove bool) {
 
 	tui.Header("Removing orphans")
 
-	argv := append([]string{"-Rns"}, orphans...)
-	writePm().Live(argv...)
+	writePm().AddArgs("-Rns", "--").Live(orphans...)
 }
 
 func getOptDepends(target string) []string {

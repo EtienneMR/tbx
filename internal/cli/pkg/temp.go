@@ -19,7 +19,6 @@ becomes a candidate for automatic removal as soon as nothing else depends on it.
 	Run: func(cmd *cobra.Command, args []string) {
 		tui.Step("Installing as deps: %s", strings.Join(args, "  "))
 
-		argv := append([]string{"-S", "--needed", "--asdeps"}, args...)
-		writePm().Live(argv...)
+		writePm().AddArgs("-S", "--needed", "--asdeps", "--").Live(args...)
 	},
 }
