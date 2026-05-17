@@ -15,8 +15,8 @@ var sudo = New("sudo")
 
 // Process tries multiple command names in order and returns the first one found.
 type Process struct {
-	Names    []string
-	Args     []string
+	names    []string
+	args     []string
 	Resolved Resolved
 }
 
@@ -34,14 +34,18 @@ type Result struct {
 }
 
 func New(names ...string) *Process {
-	return &Process{Names: names}
+	return &Process{names: names}
 }
 
 func NewResolved(name string, path string, args ...string) *Process {
+	if path == "" {
+		panic("NewResolved with unresolved path")
+	}
+
 	return &Process{
-		Names:    []string{name},
+		names:    []string{name},
 		Resolved: Resolved{Name: name, Path: path},
-		Args:     args,
+		args:     args,
 	}
 }
 
@@ -50,17 +54,21 @@ func (c *Process) AddArgs(args ...string) *Process {
 		return c
 	}
 
-	final := make([]string, 0, len(c.Args)+len(args))
-	final = append(final, c.Args...)
+	final := make([]string, 0, len(c.args)+len(args))
+	final = append(final, c.args...)
 	final = append(final, args...)
 
-	return NewResolved(c.Resolved.Name, c.Resolved.Path, final...)
+	return &Process{
+		names:    c.names,
+		Resolved: c.Resolved,
+		args:     final,
+	}
 }
 
 func (c *Process) Sudo() *Process {
 	tui.Check(c.Resolve(), "process.Sudo")
 
-	return sudo.AddArgs(c.Resolved.Path, "--").AddArgs(c.Args...)
+	return sudo.AddArgs(c.Resolved.Path, "--").AddArgs(c.args...)
 }
 
 func (c *Process) Resolve() error {
@@ -76,7 +84,7 @@ func (c *Process) Resolve() error {
 
 func (c *Process) Command() *exec.Cmd {
 	tui.Check(c.Resolve(), "process.Command")
-	return exec.Command(c.Resolved.Path, c.Args...)
+	return exec.Command(c.Resolved.Path, c.args...)
 }
 
 // Run executes the command with the provided arguments and returns
@@ -162,7 +170,7 @@ func (c *Process) Live(args ...string) {
 
 func (c *Process) find() (Resolved, error) {
 	var errs []string
-	for _, name := range c.Names {
+	for _, name := range c.names {
 		path, err := exec.LookPath(name)
 		if err == nil {
 			return Resolved{Name: name, Path: path}, nil
