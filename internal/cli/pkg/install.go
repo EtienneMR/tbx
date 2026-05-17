@@ -16,7 +16,6 @@ var installCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		tui.Step("Installing: %s", strings.Join(args, "  "))
 
-		argv := append([]string{"-S", "--needed"}, args...)
-		writePm().Live(argv...)
+		writePm().AddArgs("-S", "--needed", "--").Live(args...)
 	},
 }

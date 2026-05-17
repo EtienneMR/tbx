@@ -62,14 +62,15 @@ func run(_ *cobra.Command, args []string) {
 
 // openVSCode opens all paths in a single VS Code / VSCodium instance.
 func openVSCode(paths []string, hasFiles bool) {
-	argv := paths
+	cmd := vscode
 	if hasFiles {
-		argv = append([]string{"--wait"}, paths...)
+		cmd = cmd.AddArgs("--wait", "--")
 		tui.Step("Opening in %s (blocking)", vscode.Resolved.Name)
 	} else {
+		cmd = cmd.AddArgs("--")
 		tui.Step("Opening in %s", vscode.Resolved.Name)
 	}
-	vscode.Live(argv...)
+	cmd.Live(paths...)
 }
 
 // openNano opens each file sequentially in nano.
@@ -104,7 +105,7 @@ func openDolphin(dirs []string) {
 
 		tui.Step("Opening %s", d)
 
-		cmd := dolphin.Command(d)
+		cmd := dolphin.AddArgs("--", d).Command()
 		cmd.Stdout = nil
 		cmd.Stderr = nil
 

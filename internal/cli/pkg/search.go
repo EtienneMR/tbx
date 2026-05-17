@@ -14,7 +14,6 @@ apply its own AND logic.`,
 	Args:              cobra.MinimumNArgs(1),
 	ValidArgsFunction: completeLocal,
 	Run: func(cmd *cobra.Command, args []string) {
-		argv := append([]string{"-Ss"}, args...)
-		pm.Live(argv...)
+		pm.AddArgs("-Ss", "--").Live(args...)
 	},
 }

@@ -13,12 +13,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Version is injected at build time via -ldflags.
-var Version = "dev"
+// Injected at build time via -ldflags.
+var Version, Name = "dev", "tbx"
 
 func Execute() {
 	cmd := &cobra.Command{
-		Use:   "tbx",
+		Use:   Name,
 		Short: "Personal toolbox CLI",
 		Long:  "tbx — a personal toolbox for everyday dev tasks.",
 	}

@@ -45,12 +45,22 @@ func NewResolved(name string, path string, args ...string) *Process {
 	}
 }
 
+func (c *Process) AddArgs(args ...string) *Process {
+	if len(args) == 0 {
+		return c
+	}
+
+	final := make([]string, 0, len(c.Args)+len(args))
+	final = append(final, c.Args...)
+	final = append(final, args...)
+
+	return NewResolved(c.Resolved.Name, c.Resolved.Path, final...)
+}
+
 func (c *Process) Sudo() *Process {
-	tui.Check(sudo.Resolve(), "process.Sudo")
 	tui.Check(c.Resolve(), "process.Sudo")
 
-	args := append([]string{c.Resolved.Path}, c.Args...)
-	return NewResolved(sudo.Resolved.Name, sudo.Resolved.Path, args...)
+	return sudo.AddArgs(c.Resolved.Path, "--").AddArgs(c.Args...)
 }
 
 func (c *Process) Resolve() error {
@@ -64,11 +74,9 @@ func (c *Process) Resolve() error {
 	return nil
 }
 
-func (c *Process) Command(args ...string) *exec.Cmd {
-	base := append([]string(nil), c.Args...)
-	all := append(base, args...)
+func (c *Process) Command() *exec.Cmd {
 	tui.Check(c.Resolve(), "process.Command")
-	return exec.Command(c.Resolved.Path, all...)
+	return exec.Command(c.Resolved.Path, c.Args...)
 }
 
 // Run executes the command with the provided arguments and returns
@@ -80,7 +88,7 @@ func (c *Process) Run(args ...string) (*Result, error) {
 	tui.Run("%s %s", c.Resolved.Path, strings.Join(args, " "))
 
 	var stdout, stderr bytes.Buffer
-	proc := c.Command(args...)
+	proc := c.AddArgs(args...).Command()
 	proc.Stdout = &stdout
 	proc.Stderr = &stderr
 
@@ -139,7 +147,7 @@ func (c *Process) LiveUnchecked(args ...string) error {
 
 	tui.Run("%s %s", c.Resolved.Path, strings.Join(args, " "))
 
-	proc := c.Command(args...)
+	proc := c.AddArgs(args...).Command()
 	proc.Stdin = os.Stdin
 	proc.Stdout = os.Stdout
 	proc.Stderr = os.Stderr

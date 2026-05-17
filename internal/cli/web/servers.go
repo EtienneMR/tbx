@@ -19,7 +19,7 @@ func codiumServer(path string) (*exec.Cmd, string, string) {
 	tui.Check(err, "codiumServer: state_dir")
 
 	cmd := tool.Codium.Exec().
-		Command(
+		AddArgs(
 			"--server-data-dir",
 			filepath.Join(state_dir, "server-data"),
 			"--user-data-dir",
@@ -28,7 +28,7 @@ func codiumServer(path string) (*exec.Cmd, string, string) {
 			filepath.Join(state_dir, "extensions"),
 			"--port",
 			"0",
-		)
+		).Command()
 	cmd.Dir = path
 
 	cmd.Stderr = os.Stderr
@@ -49,7 +49,7 @@ func codiumServer(path string) (*exec.Cmd, string, string) {
 }
 
 func cloudflareTunnel(url string) (*exec.Cmd, string) {
-	cmd := tool.Cloudflared.Exec().Command("--url", url)
+	cmd := tool.Cloudflared.Exec().AddArgs("--url", url).Command()
 
 	stderr, err := cmd.StderrPipe()
 	tui.Check(err, "cloudflareTunnel: pipe stderr")

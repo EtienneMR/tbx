@@ -21,8 +21,7 @@ removed by ` + "`tbx packages orphans --remove`" + ` even when nothing else depe
 
 		tui.Step("Marking as explicit: %s", strings.Join(args, "  "))
 
-		argv := append([]string{"-D", "--asexplicit"}, args...)
-		writePm().Live(argv...)
+		writePm().AddArgs("-D", "--asexplicit", "--").Live(args...)
 	},
 }
 
