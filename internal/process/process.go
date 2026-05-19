@@ -68,7 +68,7 @@ func (c *Process) AddArgs(args ...string) *Process {
 func (c *Process) Sudo() *Process {
 	tui.Check(c.Resolve(), "process.Sudo")
 
-	return sudo.AddArgs(c.Resolved.Path, "--").AddArgs(c.args...)
+	return sudo.AddArgs("--", c.Resolved.Path).AddArgs(c.args...)
 }
 
 func (c *Process) Resolve() error {
@@ -84,6 +84,8 @@ func (c *Process) Resolve() error {
 
 func (c *Process) Command() *exec.Cmd {
 	tui.Check(c.Resolve(), "process.Command")
+	tui.Run("%s %s", c.Resolved.Path, strings.Join(c.args, " "))
+
 	return exec.Command(c.Resolved.Path, c.args...)
 }
 
@@ -93,7 +95,6 @@ func (c *Process) Run(args ...string) (*Result, error) {
 	if err := c.Resolve(); err != nil {
 		return nil, err
 	}
-	tui.Run("%s %s", c.Resolved.Path, strings.Join(args, " "))
 
 	var stdout, stderr bytes.Buffer
 	proc := c.AddArgs(args...).Command()
@@ -152,8 +153,6 @@ func (c *Process) LiveUnchecked(args ...string) error {
 	if err := c.Resolve(); err != nil {
 		return err
 	}
-
-	tui.Run("%s %s", c.Resolved.Path, strings.Join(args, " "))
 
 	proc := c.AddArgs(args...).Command()
 	proc.Stdin = os.Stdin

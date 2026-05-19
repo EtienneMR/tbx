@@ -33,6 +33,6 @@ func runUnwipCmd(cmd *cobra.Command, args []string) {
 	git.Must("switch", base_branch)
 
 	tui.Step("Restoring selected files from %q", branch)
-	git.Must("restore", "--source", branch, "--", ".")
+	git.Must("restore", "--source", branch, ".")
 
 }
