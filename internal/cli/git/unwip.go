@@ -9,10 +9,9 @@ import (
 
 var unwipCmd = &cobra.Command{
 	Use:   "unwip",
-	Short: "Cherry-pick changes from a WIP branch into a proper commit on the base branch",
-	Long: `Selects files that differ between the current WIP branch and its base branch,
-restores the chosen files onto the base branch, and commits them with a message.`,
-	Run: runUnwipCmd,
+	Short: "Bring changes from the WIP branch onto the base branch",
+	Long:  `Switch to the base branch and reset files to match the WIP branch.`,
+	Run:   runUnwipCmd,
 }
 
 func runUnwipCmd(cmd *cobra.Command, args []string) {
@@ -32,7 +31,6 @@ func runUnwipCmd(cmd *cobra.Command, args []string) {
 	tui.Step("Switching to %q", base_branch)
 	git.Must("switch", base_branch)
 
-	tui.Step("Restoring selected files from %q", branch)
+	tui.Step("Restoring files from %q", branch)
 	git.Must("restore", "--source", branch, ".")
-
 }

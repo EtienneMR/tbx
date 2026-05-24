@@ -33,11 +33,17 @@ func runWipCmd(cmd *cobra.Command, args []string) {
 		if res.Code == 128 {
 			tui.Step("Creating to %q", wip_branch)
 
-			result, err := getRemoteOf(branch)
-			process.Check(result, err)
-
 			git.Must("switch", "--create", wip_branch)
-			git.Must("push", "--set-upstream", result.Stdout, wip_branch)
+
+			remote, err := getRemoteOf(branch)
+
+			if err == nil {
+				tui.Step("Pushing %q to remote %q", wip_branch, remote)
+				git.Must("push", "--set-upstream", remote, wip_branch)
+			} else {
+				tui.Debug("%s", err)
+				tui.Info("No remotes configured, skipping push for %q", wip_branch)
+			}
 
 		} else {
 			process.Check(res, err)
@@ -47,5 +53,5 @@ func runWipCmd(cmd *cobra.Command, args []string) {
 	snapshot_if_dirty(message, true)
 
 	tui.Blank()
-	tui.Success("Snapshot saved on %q", branch)
+	tui.Success("Snapshot saved on %q", wip_branch)
 }

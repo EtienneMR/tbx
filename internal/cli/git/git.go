@@ -1,6 +1,8 @@
 package git
 
 import (
+	"fmt"
+
 	"github.com/EtienneMR/tbx/internal/process"
 	"github.com/EtienneMR/tbx/internal/tui"
 	"github.com/spf13/cobra"
@@ -38,14 +40,28 @@ func snapshot_if_dirty(message string, always_push bool) {
 		git.Must("commit", "--message", message)
 	}
 
-	tui.Step("Pushing snapshot")
-	git.Must("push", "--force-with-lease")
+	if remote, err := getRemoteOf("HEAD"); err != nil {
+		tui.Step("Pushing snapshot")
+		git.Must("push", remote, "--force-with-lease")
+	} else {
+		tui.Info("No remotes configured, skipping push")
+	}
 }
 
-func getRemoteOf(branch string) (*process.Result, error) {
+// getRemoteOf gets the upstream remote for a branch
+func getRemoteOf(branch string) (string, error) {
 	result, err := git.Run("for-each-ref", "--format=%(upstream:remotename)", "refs/heads/"+branch)
-	if result.Stdout == "" {
-		result.Stdout = DEFAULT_REMOTE
+	if err != nil {
+		return "", err
 	}
-	return result, err
+
+	if result.Stdout != "" {
+		return result.Stdout, nil
+	}
+
+	if result, err = git.Run("remote", "get-url", DEFAULT_REMOTE); err == nil && result.Code == 0 {
+		return DEFAULT_REMOTE, nil
+	}
+
+	return "", fmt.Errorf("no remote for branch %s", branch)
 }

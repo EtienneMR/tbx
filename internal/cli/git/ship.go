@@ -121,11 +121,12 @@ func runShipCmd(cmd *cobra.Command, args []string) {
 
 		tui.Step("Deleting remote branch %q", wip_branch)
 		result, err := getRemoteOf(wip_branch)
-		process.Check(result, err)
 
-		res, err := git.Run("push", result.Stdout, "--delete", wip_branch)
-		if res.Code != 1 {
-			process.Check(res, err)
+		if err == nil {
+			res, err := git.Run("push", result, "--delete", wip_branch)
+			if !process.IsErrorCode(err, 1) {
+				process.Check(res, err)
+			}
 		}
 	}
 
@@ -138,7 +139,7 @@ func runShipCmd(cmd *cobra.Command, args []string) {
 func currentVersion() string {
 	res, err := git.Run("describe", "--tags", "--abbrev=0", "--match", "v*")
 	if err != nil || res.Stdout == "" {
-		return "none"
+		return ""
 	}
 	return res.Stdout
 }

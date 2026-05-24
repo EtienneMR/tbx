@@ -47,24 +47,27 @@ func runOrphan(remove bool, packages []string) {
 
 	orphans := strings.Fields(res.Stdout)
 
-	if !remove {
-		tui.Header("Orphaned packages")
-		for _, orphan := range orphans {
-			optdeps := getOptDepends(orphan)
-			if len(optdeps) > 0 {
-				tui.Item("%s (optional dependency of: %s)", orphan, strings.Join(optdeps, ", "))
-			} else {
-				tui.Item("%s", orphan)
-			}
+	tui.Header("Orphaned packages")
+	for _, orphan := range orphans {
+		optdeps := getOptDepends(orphan)
+		if len(optdeps) > 0 {
+			tui.Item("%s (optional dependency of: %s)", orphan, strings.Join(optdeps, ", "))
+		} else {
+			tui.Item("%s", orphan)
 		}
-		tui.Blank()
-		tui.Info("Run with --remove to remove them")
-		return
 	}
 
-	tui.Header("Removing orphans")
+	if remove {
+		tui.Header("Removing orphans")
 
-	writePm().AddArgs("-Rns", "--").Live(orphans...)
+		err := writePm().AddArgs("-Rns", "--").LiveUnchecked(orphans...)
+		if !process.IsErrorCode(err, 1) {
+			tui.Check(err, "orphan remove")
+		}
+	} else {
+		tui.Blank()
+		tui.Info("Run with --remove to remove them")
+	}
 }
 
 func getOptDepends(target string) []string {
