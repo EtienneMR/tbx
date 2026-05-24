@@ -43,7 +43,7 @@ func runShipCmd(cmd *cobra.Command, args []string) {
 		Description("Describe the changes being shipped to "+branch+".").
 		Value(&message))
 
-	if git.Test(1, "show-ref", "--verify", "--quiet", wip_branch) {
+	if git.Test(1, "show-ref", "--verify", "--quiet", "refs/heads/"+wip_branch) {
 		fields = append(fields, huh.NewSelect[string]().
 			Title("What next?").
 			Description("Choose what to do with "+wip_branch+" after the ship commit.").
