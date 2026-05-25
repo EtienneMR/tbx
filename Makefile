@@ -18,9 +18,10 @@ docs:
 	rm -rf docs
 	mkdir -p docs
 	for f in ./internal/*; do \
-		go doc -all "$$f" > "docs/$$(basename "$$f").txt"; \
-		go doc "$$f" >> docs/all.txt; \
-	done
+		go doc -all -u "$$f" > "docs/$$(basename "$$f").txt"; \
+		go doc "$$f"; \
+		printf "\n\n"; \
+	done | sed -z 's/\n\+$$/\n/' > docs/all.txt
 
 clean:
 	go clean
