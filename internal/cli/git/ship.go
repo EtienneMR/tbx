@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"charm.land/huh/v2"
-	"github.com/EtienneMR/tbx/internal/process"
 	"github.com/EtienneMR/tbx/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -121,10 +120,7 @@ func runShipCmd(cmd *cobra.Command, args []string) {
 
 		if remote, err := getRemoteOf(wip_branch); err == nil {
 			tui.Step("Deleting remote branch %q", wip_branch)
-			res, err := git.Run("push", remote, "--delete", wip_branch)
-			if !process.IsErrorCode(err, 1) {
-				process.Check(res, err)
-			}
+			git.Test(1, "push", remote, "--delete", wip_branch)
 		}
 	}
 

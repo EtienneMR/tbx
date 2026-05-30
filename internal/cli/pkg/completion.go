@@ -50,12 +50,10 @@ func completeInstalled(_ *cobra.Command, args []string, toComplete string) ([]st
 
 func completeOrphans(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	res, err := pm.Run("-Qdttq")
-	if err != nil {
-		if !process.IsErrorCode(err, 1) {
-			tui.Error("%s", err)
-		}
+	if process.IsErrorCode(err, 1) {
 		return nil, noFiles
 	}
+	process.Check(res, err)
 
 	already := sliceToSet(args)
 	var out []string

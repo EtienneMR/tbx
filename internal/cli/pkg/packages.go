@@ -33,17 +33,10 @@ var pacman = process.New("pacman")
 var pm = process.New("paru", "yay", "pacman")
 
 func UpdatePackages() {
-	if err := pm.Resolve(); err != nil {
-		tui.Debug("Not updating packages: paru, yay, and pacman not found")
-		return
-	}
+	tui.Check(pm.Resolve(), "resolve package manager")
 
 	tui.Header("Updating system packages")
-
-	err := writePm().LiveUnchecked("-Syu")
-	if err != nil && !process.IsErrorCode(err, 1) {
-		tui.Check(err, "update packages")
-	}
+	writePm().Live("-Syu")
 
 	removeOrphans()
 }

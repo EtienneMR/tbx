@@ -54,10 +54,11 @@ func runUpdate() {
 
 	if rebootRequired() {
 		tui.Warn("Reboot required")
-		ok, err := tui.Confirm("Reboot now?", false)
-		if ok && err != nil {
-			process.New("reboot").Sudo().Live()
-		}
+	}
+
+	ok, err := tui.Confirm("Reboot now?", true)
+	if ok && err != nil {
+		process.New("reboot").Sudo().Live()
 	}
 
 	tui.Blank()
