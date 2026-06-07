@@ -40,10 +40,12 @@ func snapshot_if_dirty(message string, always_push bool) {
 		git.Must("commit", "--message", message)
 	}
 
-	if remote, err := getRemoteOf("HEAD"); err != nil {
+	remote, err := getRemoteOf("HEAD")
+	if err == nil {
 		tui.Step("Pushing snapshot")
 		git.Must("push", remote, "--force-with-lease")
 	} else {
+		tui.Debug("%v", err)
 		tui.Info("No remotes configured, skipping push")
 	}
 }
@@ -59,7 +61,7 @@ func getRemoteOf(branch string) (string, error) {
 		return result.Stdout, nil
 	}
 
-	if result, err = git.Run("remote", "get-url", DEFAULT_REMOTE); err == nil && result.Code == 0 {
+	if result, err = git.Run("remote", "get-url", DEFAULT_REMOTE); err == nil {
 		return DEFAULT_REMOTE, nil
 	}
 
